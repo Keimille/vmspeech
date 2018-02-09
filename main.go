@@ -82,6 +82,8 @@ func main() {
 		}
 	}
 	send(*callerIDptr, transcript, confidence, toEmail, vmpath)
+	//after send delete voicemail in INBOX (msg0000.wav)
+	os.Remove(vmpath)
 }
 
 func send(callerIDptr string, transcript string, confidence float32, toEmail string, vmpath string) {
