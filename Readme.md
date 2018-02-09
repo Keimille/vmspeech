@@ -1,5 +1,6 @@
-# asteriskGoogleSpeech
+# vmspeech
 
-### run this first
+### A package for integrating wav file transcription and emailing attachments
+#### current use case is for asterisk PBX implementations
 
-export GOOGLE_APPLICATION_CREDENTIALS=googleconfig.json
+1. export GOOGLE_APPLICATION_CREDENTIALS=googleconfig.json
