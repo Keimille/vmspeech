@@ -28,7 +28,7 @@ func main() {
 	extentsionptr := flag.String("extension", "", "Passed from asterisk, VM_Mailbox")
 	flag.Parse()
 
-	vmpath := "/var/spool/asterisk/voicemail/default/" + *extentsionptr + "/INBOX/*.wav"
+	vmpath := "/var/spool/asterisk/voicemail/default/" + *extentsionptr + "/INBOX/msg0000.wav"
 	fmt.Println(vmpath)
 
 	viper.SetConfigName("config")

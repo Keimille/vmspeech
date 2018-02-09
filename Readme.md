@@ -10,7 +10,10 @@
 _TODOs_
 1. Integrate asterisk/FreePBX mailmcd to call built app, w/ cli Flags
 2. locate logic for asterisk's temp WAV storage and pass to cli call
-3. delete WAV file after transmission 
+3. delete WAV file after transmission
+
+_build on mac for linux_
+env GOOS=linux GOARCH=amd64 go build
 
 _sample mailmcd trigger_
 
