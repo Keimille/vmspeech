@@ -23,11 +23,13 @@ func main() {
 	ctx := context.Background()
 
 	//Set Flags
-	//toEmailptr := flag.String("toEmail", "to pull from flag/asterisk", "define where email transcription should send")
-	filenameptr := flag.String("filename", "voicemail.wav", "load voicemail file location (temp file?)")
+	//filenameptr := flag.String("filename", "voicemail.wav", "load voicemail file location (temp file?)")
 	callerIDptr := flag.String("callerID", "", "passed from asterisk ${VM_CALLERID}")
-	exentsionptr := flag.String("extension", "", "Passed from asterisk, VM_Mailbox")
+	extentsionptr := flag.String("extension", "", "Passed from asterisk, VM_Mailbox")
 	flag.Parse()
+
+	vmpath := "/var/spool/asterisk/voicemail/default/" + *extentsionptr + "/INBOX/*.wav"
+	fmt.Println(vmpath)
 
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./")
@@ -36,18 +38,20 @@ func main() {
 		fmt.Println("Can't find config file for email auth")
 		fmt.Println(viperErr)
 	}
-	//call asteriskConfig
-	toEmail := asteriskConfig(*exentsionptr)
+	//call asteriskConfig and return email destintation
+	toEmail := asteriskConfig(*extentsionptr)
 	println("Line 41..... ", toEmail)
 
-	// Creates a client.
+	// Creates google speech client.
 	client, err := speech.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
+	// GET This file path form asterisk somehow.......
 	// Reads the audio file into memory.
-	data, err := ioutil.ReadFile(*filenameptr)
+	//data, err := ioutil.ReadFile(*filenameptr)
+	data, err := ioutil.ReadFile(vmpath)
 	if err != nil {
 		log.Fatalf("Failed to read file: %v", err)
 	}
@@ -77,17 +81,17 @@ func main() {
 			confidence = alt.Confidence
 		}
 	}
-	send(*callerIDptr, transcript, confidence, toEmail, *filenameptr)
+	send(*callerIDptr, transcript, confidence, toEmail, vmpath)
 }
 
-func send(callerIDptr string, transcript string, confidence float32, toEmail string, filenameptr string) {
+func send(callerIDptr string, transcript string, confidence float32, toEmail string, vmpath string) {
 	// compose the message
 	m := email.NewMessage("New Voicemail From -> "+callerIDptr, transcript)
 	m.From = mail.Address{Name: "TTS Voicemail", Address: viper.GetString("emailSource")}
 	m.To = []string{toEmail}
 
 	// add attachments
-	if err := m.Attach(filenameptr); err != nil {
+	if err := m.Attach(vmpath); err != nil {
 		log.Fatal(err)
 	}
 
@@ -97,7 +101,7 @@ func send(callerIDptr string, transcript string, confidence float32, toEmail str
 	if err := email.Send("smtp.gmail.com:587", auth, m); err != nil {
 		log.Fatal(err)
 	}
-	log.Print("voicemail sent (attachment --> ", filenameptr, ")")
+	log.Print("voicemail sent (attachment --> ", vmpath, ")")
 }
 
 func asteriskConfig(extensionptr string) string {
