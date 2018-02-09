@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/mail"
 	"net/smtp"
 
 	// Imports the Google Cloud Speech API client package.
 	speech "cloud.google.com/go/speech/apiv1"
+	"github.com/scorredoira/email"
 	"github.com/spf13/viper"
 	speechpb "google.golang.org/genproto/googleapis/cloud/speech/v1"
 )
@@ -18,9 +20,8 @@ func main() {
 	ctx := context.Background()
 
 	//Set Flags
-	//toEmailptr := flag.String("toEmail", "to pull from flag/asterisk", "define where email transcription should send")
-	//toEmail := (*toEmailptr)
-	filenameptr := flag.String("filename", "voicemail.wav", "load voicemail file")
+	toEmailptr := flag.String("toEmail", "to pull from flag/asterisk", "define where email transcription should send")
+	filenameptr := flag.String("filename", "voicemail.wav", "load voicemail file location (temp file?)")
 	flag.Parse()
 
 	viper.SetConfigName("config")
@@ -59,36 +60,34 @@ func main() {
 	}
 
 	// Prints the results
-	var transcript = ""
+	var transcript string
+	var confidence float32
 	for _, result := range resp.Results {
 		for _, alt := range result.Alternatives {
 			fmt.Printf("\"%v\" (confidence=%3f)\n", alt.Transcript, alt.Confidence)
-			ioutil.WriteFile("output.txt", []byte(alt.Transcript), 0644)
 			transcript = alt.Transcript
-			fmt.Println(transcript)
+			confidence = alt.Confidence
 		}
 	}
-	send(transcript)
+	send(transcript, confidence, *toEmailptr, *filenameptr)
 }
 
-func send(transcript string) {
-	from := viper.GetString("emailSource")
-	pass := viper.GetString("emailSourcePass")
-	to := "......"
+func send(transcript string, confidence float32, toEmailptr string, filenameptr string) {
+	// compose the message
+	m := email.NewMessage("New Voicemail", transcript)
+	m.From = mail.Address{Name: "TTS Voicemail", Address: viper.GetString("emailSource")}
+	m.To = []string{toEmailptr}
 
-	msg := "From: " + from + "\n" +
-		"To: " + to + "\n" +
-		"Subject: New Voicemail\n\n" +
-		transcript
-
-	err := smtp.SendMail("smtp.gmail.com:587",
-		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-		from, []string{to}, []byte(msg))
-
-	if err != nil {
-		log.Printf("smtp error: %s", err)
-		return
+	// add attachments
+	if err := m.Attach(filenameptr); err != nil {
+		log.Fatal(err)
 	}
 
-	log.Print("voicemail transcription sent!")
+	// send it
+	auth := smtp.PlainAuth("", viper.GetString("emailSource"),
+		viper.GetString("emailSourcePass"), "smtp.gmail.com")
+	if err := email.Send("smtp.gmail.com:587", auth, m); err != nil {
+		log.Fatal(err)
+	}
+	log.Print("voicemail sent (attachment --> ", filenameptr, ")")
 }
