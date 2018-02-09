@@ -14,5 +14,7 @@ _TODOs_
 _sample mailmcd trigger_
 
 /opt/vmspeech/dist/main-linux --filename="/var/spool/asterisk/default/{getExtension?}/.tmp" \\
+
 --toEmail="{emailAddress of mailbox}" \\
+
 --callerID="${VM_CALLERID}"
