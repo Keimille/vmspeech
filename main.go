@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"log"
 	"net/mail"
 	"net/smtp"
+	"os"
+	"strings"
 
 	// Imports the Google Cloud Speech API client package.
 	speech "cloud.google.com/go/speech/apiv1"
@@ -20,9 +23,10 @@ func main() {
 	ctx := context.Background()
 
 	//Set Flags
-	toEmailptr := flag.String("toEmail", "to pull from flag/asterisk", "define where email transcription should send")
+	//toEmailptr := flag.String("toEmail", "to pull from flag/asterisk", "define where email transcription should send")
 	filenameptr := flag.String("filename", "voicemail.wav", "load voicemail file location (temp file?)")
 	callerIDptr := flag.String("callerID", "", "passed from asterisk ${VM_CALLERID}")
+	exentsionptr := flag.String("extension", "", "Passed from asterisk, VM_Mailbox")
 	flag.Parse()
 
 	viper.SetConfigName("config")
@@ -32,6 +36,9 @@ func main() {
 		fmt.Println("Can't find config file for email auth")
 		fmt.Println(viperErr)
 	}
+	//call asteriskConfig
+	toEmail := asteriskConfig(*exentsionptr)
+	println("Line 41..... ", toEmail)
 
 	// Creates a client.
 	client, err := speech.NewClient(ctx)
@@ -70,14 +77,14 @@ func main() {
 			confidence = alt.Confidence
 		}
 	}
-	send(*callerIDptr, transcript, confidence, *toEmailptr, *filenameptr)
+	send(*callerIDptr, transcript, confidence, toEmail, *filenameptr)
 }
 
-func send(callerIDptr string, transcript string, confidence float32, toEmailptr string, filenameptr string) {
+func send(callerIDptr string, transcript string, confidence float32, toEmail string, filenameptr string) {
 	// compose the message
 	m := email.NewMessage("New Voicemail From -> "+callerIDptr, transcript)
 	m.From = mail.Address{Name: "TTS Voicemail", Address: viper.GetString("emailSource")}
-	m.To = []string{toEmailptr}
+	m.To = []string{toEmail}
 
 	// add attachments
 	if err := m.Attach(filenameptr); err != nil {
@@ -91,4 +98,30 @@ func send(callerIDptr string, transcript string, confidence float32, toEmailptr 
 		log.Fatal(err)
 	}
 	log.Print("voicemail sent (attachment --> ", filenameptr, ")")
+}
+
+func asteriskConfig(extensionptr string) string {
+	//pull voicemail.conf file from asterisk
+	file, err := os.Open("/etc/asterisk/voicemail.conf")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	var line string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), extensionptr+" =>") {
+			line = (scanner.Text())
+		}
+	}
+	if err = scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(line)
+	//parse returned extension config for destination email address
+	s := strings.Split(line, ",")
+	destemail := s[2]
+	fmt.Println("Line 124.... ", destemail)
+	return destemail
 }
