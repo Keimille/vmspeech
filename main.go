@@ -25,21 +25,21 @@ func main() {
 	//Set Flags
 	//filenameptr := flag.String("filename", "voicemail.wav", "load voicemail file location (temp file?)")
 	callerIDptr := flag.String("callerID", "", "passed from asterisk ${VM_CALLERID}")
-	extentsionptr := flag.String("extension", "", "Passed from asterisk, VM_Mailbox")
+	extensionptr := flag.String("extension", "", "Passed from asterisk, VM_Mailbox")
 	flag.Parse()
 
-	vmpath := "/var/spool/asterisk/voicemail/default/" + *extentsionptr + "/INBOX/msg0000.wav"
+	vmpath := "/var/spool/asterisk/voicemail/default/" + *extensionptr + "/INBOX/msg0000.wav"
 	fmt.Println(vmpath)
 
 	viper.SetConfigName("config")
-	viper.AddConfigPath("./")
+	viper.AddConfigPath("/opt/vmspeech/")
 	viperErr := viper.ReadInConfig()
 	if viperErr != nil {
 		fmt.Println("Can't find config file for email auth")
 		fmt.Println(viperErr)
 	}
 	//call asteriskConfig and return email destintation
-	toEmail := asteriskConfig(*extentsionptr)
+	toEmail := asteriskConfig(*extensionptr)
 	println("Line 41..... ", toEmail)
 
 	// Creates google speech client.

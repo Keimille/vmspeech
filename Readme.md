@@ -3,9 +3,11 @@
 ### A package for integrating wav file transcription and emailing attachments
 #### current use case is for asterisk PBX implementations
 
+## current issue > sourcing config.json file...
 1. Create Google Cloud Project, and active Speech API
 2. Create service account, and download json config file, placing it in same directory as executable
 3. run -> export GOOGLE_APPLICATION_CREDENTIALS=googleconfig.json
+4. or export GOOGLE_APPLICATION_CREDENTIALS=/opt/vmspeech/googleconfig.json
 
 _TODOs_
 1. Integrate asterisk/FreePBX mailmcd to call built app, w/ cli Flags
@@ -17,8 +19,4 @@ env GOOS=linux GOARCH=amd64 go build
 
 _sample mailmcd trigger_
 
-/opt/vmspeech/dist/main-linux --filename="/var/spool/asterisk/default/{getExtension?}/.tmp" \\
-
---toEmail="{emailAddress of mailbox}" \\
-
---callerID="${VM_CALLERID}"
+/opt/vmspeech/./main-linux --callerID=${VM_CALLERID} --extension=${VM_MAILBOX}
