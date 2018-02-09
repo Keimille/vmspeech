@@ -7,4 +7,10 @@
 
 _TODOs_
 1. Integrate asterisk/FreePBX mailmcd to call built app, w/ cli Flags
-2. locate logic for asterisk's temp WAV storage and pass to cli call 
+2. locate logic for asterisk's temp WAV storage and pass to cli call
+
+_sample mailmcd trigger_
+
+/opt/vmspeech/dist/main-linux --filename="/var/spool/asterisk/default/{getExtension?}/.tmp" \
+--toEmail="{emailAddress of mailbox}" \
+--callerID="${VM_CALLERID}" 

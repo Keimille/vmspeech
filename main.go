@@ -22,6 +22,7 @@ func main() {
 	//Set Flags
 	toEmailptr := flag.String("toEmail", "to pull from flag/asterisk", "define where email transcription should send")
 	filenameptr := flag.String("filename", "voicemail.wav", "load voicemail file location (temp file?)")
+	callerIDptr := flag.String("callerID", "", "passed from asterisk ${VM_CALLERID}")
 	flag.Parse()
 
 	viper.SetConfigName("config")
@@ -69,12 +70,12 @@ func main() {
 			confidence = alt.Confidence
 		}
 	}
-	send(transcript, confidence, *toEmailptr, *filenameptr)
+	send(*callerIDptr, transcript, confidence, *toEmailptr, *filenameptr)
 }
 
-func send(transcript string, confidence float32, toEmailptr string, filenameptr string) {
+func send(callerIDptr string, transcript string, confidence float32, toEmailptr string, filenameptr string) {
 	// compose the message
-	m := email.NewMessage("New Voicemail", transcript)
+	m := email.NewMessage("New Voicemail From -> "+callerIDptr, transcript)
 	m.From = mail.Address{Name: "TTS Voicemail", Address: viper.GetString("emailSource")}
 	m.To = []string{toEmailptr}
 
