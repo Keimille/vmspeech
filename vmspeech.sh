@@ -2,7 +2,7 @@
 # Asterisk voicemail attachment conversion script, including voice recognition
 # Use Voice Recognition Engine provided by Google API
 #
-#based on original by -> http://bernaerts.dyndns.org/linux/179-asterisk-voicemail-mp3
+#based on original by -> http://bernaerts.dyndns.org/linux/179-asterisk-voicemail-wav
 
 # set language for voice recognition (en-US, en-GB, fr-FR, ...)
 LANGUAGE="en-US"
@@ -78,11 +78,11 @@ TRANSCRIPT=`cat audio.txt | grep transcript | sed 's#^.*"transcript": "##g' | se
   # end of message body
   tail -1 stream.part2 >> stream.new
 
-  # append mp3 header
+  # append wav header
   cat stream.part3.wav.head >> stream.new
   dos2unix -o stream.new
 
-  # append base64 mp3 to mail body, keeping CRLF
+  # append base64 wav to mail body, keeping CRLF
   unix2dos -o stream.part3.wav.base64
   cat stream.part3.wav.base64 >> stream.new
 
